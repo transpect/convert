@@ -181,7 +181,7 @@ function conv:list($filename as xs:string, $converter as xs:string) {
              (for $file in file:list($output-dir)
               return 
                 if(file:is-file($output-dir || file:dir-separator() || $file)) 
-                  { '"' || '/downloads/' || $converter || '/' || $file || '"' } 
+                  { '"' || '/download/' || $converter || '/' || $filename || '/' || $file || '"' } 
              ),
              ','
            ),
@@ -193,14 +193,14 @@ function conv:list($filename as xs:string, $converter as xs:string) {
  : Download files from the output dir.
  : http://localhost:8080/results/epub2epub/myfile.epub
  : 
- : $ curl --output myfile.epub -G http://localhost:8080/download/epub2epub/myfile.epub 
+ : $ curl --output myfile.epub -G http://localhost:8080/download/epub2epub/myfile.epub/myresult.txt
  :)
 declare
-%rest:path("/download/{$converter=.+}/{$filename=.+}")
+%rest:path("/download/{$converter=.+}/{$filename=.+}/{$result=.+}")
 %perm:allow("all")
-function conv:download( $filename as xs:string, $converter as xs:string ) as item()+ {
+function conv:download( $result as xs:string, $filename as xs:string, $converter as xs:string ) as item()+ {
   let $output-dir := $conv:data-dir || file:dir-separator() || $converter || file:dir-separator() || $filename || file:dir-separator() || 'out'
-  let $path := $output-dir || file:dir-separator() || $filename
+  let $path := $output-dir || file:dir-separator() || $result
   return
     (
      web:response-header(
