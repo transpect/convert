@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<config xmlns="http://transpect.io/convert">
+  <protocol>http</protocol>
+  <host>localhost</host>
+  <port>8984</port>
+  <code-dir>/home/user/code</code-dir>
+  <data-dir>/home/user/data</data-dir>
+  <queue-limit>4</queue-limit>
+  <polling-delay>1000</polling-delay>
+</config>
