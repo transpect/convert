@@ -3,7 +3,6 @@
  : 
  :)
 module namespace  conv                = 'http://transpect.io/convert';
-declare namespace c                   = 'http://www.w3.org/ns/xproc-step';
 
 declare variable $conv:config        := doc('config.xml')/conv:config;
 declare variable $conv:code-dir      := xs:string($conv:config/conv:code-dir);
