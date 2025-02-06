@@ -16,7 +16,7 @@ declare variable $conv:polling-delay := xs:integer($conv:config/conv:polling-del
  : Receive file and convert it 
  : with the selected converter.
  :
- : $ curl -i -X POST -H "Content-Type: multipart/form-data" -F converter=epub2epub -F "file=@path/to/myfile.epub" http://localhost:8080/convert
+ : $ curl -i -X POST -H "Content-Type: multipart/form-data" -F converter=myconverter -F "file=@path/to/myfile.epub" http://localhost:8080/convert
  :)
 declare
   %rest:POST
@@ -51,8 +51,8 @@ declare function conv:paths($file as map(*), $converter as xs:string) as element
   let $out-path       := $output-dir    || file:dir-separator() || $name
   return 
     <paths>
-      <code-dir>{ xs:string($conv:code-dir) }</code-dir>
-      <data-dir>{ xs:string($conv:data-dir) }</data-dir>
+      <code-dir>{ $conv:code-dir }</code-dir>
+      <data-dir>{ $conv:data-dir }</data-dir>
       <input-dir>{ $input-dir }</input-dir>
       <output-dir>{ $output-dir }</output-dir>
       <queue-path>{ $conv:queue-path }</queue-path>
@@ -154,7 +154,7 @@ function conv:queue() {
 (: 
  : Gets the status of the current conversion.
  : 
- : $ curl http://localhost:8080/status/epub2epub/myfile.epub
+ : $ curl http://localhost:8080/status/myconverter/myfile.epub
  :)
 declare
   %rest:GET
@@ -191,13 +191,13 @@ function conv:list($filename as xs:string, $converter as xs:string) {
 };
 (:
  : Download files from the output dir.
- : http://localhost:8080/results/epub2epub/myfile.epub
+ : http://localhost:8080/results/myconverter/myfile.epub
  : 
- : $ curl --output myfile.epub -G http://localhost:8080/download/epub2epub/myfile.epub/myresult.txt
+ : $ curl --output myfile.epub -G http://localhost:8080/download/myconverter/myfile.epub/myresult.txt
  :)
 declare
-%rest:path("/download/{$converter=.+}/{$filename=.+}/{$result=.+}")
-%perm:allow("all")
+  %rest:path("/download/{$converter=.+}/{$filename=.+}/{$result=.+}")
+  %perm:allow("all")
 function conv:download( $result as xs:string, $filename as xs:string, $converter as xs:string ) as item()+ {
   let $output-dir := $conv:data-dir || file:dir-separator() || $converter || file:dir-separator() || $filename || file:dir-separator() || 'out'
   let $path := $output-dir || file:dir-separator() || $result
@@ -214,7 +214,7 @@ function conv:download( $result as xs:string, $filename as xs:string, $converter
  : Describes the API in form of a WADL document
  :)
 declare
-%rest:path("/apidoc")
+  %rest:path("/apidoc")
 function conv:apidoc() {
   rest:wadl()
 };

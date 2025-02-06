@@ -3,8 +3,8 @@
   <protocol>http</protocol>
   <host>localhost</host>
   <port>8984</port>
-  <code-dir>/home/user/code</code-dir>
-  <data-dir>/home/user/data</data-dir>
+  <code-dir>/home/letex/code</code-dir>
+  <data-dir>/home/letex/data</data-dir>
   <queue-limit>4</queue-limit>
   <polling-delay>1000</polling-delay>
 </config>
