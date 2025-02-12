@@ -74,7 +74,7 @@ declare function conv:prepare($file as map(*), $paths as element(paths)) {
     (file:create-dir($paths/input-dir),
      file:create-dir($paths/output-dir),
      file:write-binary($paths/in-path, $content),
-     conv:set-status($paths, 'started'),
+     conv:set-status($paths, 'pending'),
      if (not(file:exists($paths/queue-path))) { file:write-text($paths/queue-path, '') },
      conv:queue-add($paths/process-id),
      file:copy($paths/in-path, $paths/out-path)
@@ -128,16 +128,18 @@ declare function conv:execute($paths as element(paths)) {
   let $output-dir      := $paths/output-dir
   let $out-path        := $paths/out-path
   let $process-id      := $paths/process-id
-  return
-    proc:execute(
-      'make', 
-      ('-f', 
-        $converter-path || '/Makefile',
-        'conversion',
-        'IN_FILE=' || $out-path,
-        'OUT_DIR=' || $output-dir
-       )
-    )
+  return (
+      conv:set-status($paths, 'started'),
+      proc:execute(
+        'make', 
+        ('-f', 
+          $converter-path || '/Makefile',
+          'conversion',
+          'IN_FILE=' || $out-path,
+          'OUT_DIR=' || $output-dir
+         )
+      )
+   )
 };
 (: 
  : Prints the content of the queue file
