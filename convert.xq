@@ -190,7 +190,6 @@ function conv:list($filename as xs:string, $converter as xs:string) {
 };
 (:
  : Download files from the output dir.
- : http://localhost:8080/results/myconverter/myfile.epub
  : 
  : $ curl --output myfile.epub -G http://localhost:8080/download/myconverter/myfile.epub/myresult.txt
  :)
