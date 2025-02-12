@@ -1,8 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <config xmlns="http://transpect.io/convert">
-  <protocol>http</protocol>
-  <host>localhost</host>
-  <port>8984</port>
   <code-dir>/home/letex/convert/converter</code-dir>
   <data-dir>/home/letex/convert/data</data-dir>
   <queue-limit>4</queue-limit>
