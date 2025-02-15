@@ -5,6 +5,7 @@
 module namespace  conv                = 'http://transpect.io/convert';
 
 declare variable $conv:config        := doc('config.xml')/conv:config;
+declare variable $conv:auth          := doc('auth.xml')/conv:auth;
 declare variable $conv:code-dir      := xs:string($conv:config/conv:code-dir);
 declare variable $conv:data-dir      := xs:string($conv:config/conv:data-dir);
 declare variable $conv:queue-path    := $conv:data-dir || file:dir-separator() || 'queue';
@@ -20,10 +21,12 @@ declare variable $conv:polling-delay := xs:integer($conv:config/conv:polling-del
 declare
   %rest:POST
   %rest:path("/convert")
+  %rest:form-param("token", "{$token}")
   %rest:form-param("file", "{$file}")
   %rest:form-param("converter", "{$converter}", "")
-function conv:convert($file as map(*), $converter as xs:string) {
+function conv:convert($file as map(*), $converter as xs:string, $token as xs:string?) {
   for $paths         in conv:paths($file, $converter)
+  let $valid         := conv:validate-token($token, $converter)
   let $input-dir     := $paths/input-dir
   let $output-dir    := $paths/output-dir
   let $path          := $paths/path
@@ -133,7 +136,7 @@ declare function conv:execute($paths as element(paths)) {
       proc:execute(
         'make', 
         ('-f', 
-          $converter-path || '/Makefile',
+          $converter-path ||  file:dir-separator() || 'Makefile',
           'conversion',
           'IN_FILE=' || $out-path,
           'OUT_DIR=' || $output-dir
@@ -159,23 +162,27 @@ function conv:queue() {
  :)
 declare
   %rest:GET
+  %rest:query-param("token", "{$token}")
   %rest:path("/status/{$converter=.+}/{$filename=.+}")
-function conv:status($filename as xs:string, $converter as xs:string) {
+function conv:status($filename as xs:string, $converter as xs:string, $token as xs:string?) {
+  let $valid       := conv:validate-token($token, $converter)
   let $status-path := $conv:data-dir || file:dir-separator() || $converter || file:dir-separator() || $filename || file:dir-separator() || 'status'
   return file:read-text($status-path)
 };
 (: 
  : List the available downloads
  : 
- : $ curl http://localhost:8080/list/myfile.epub 
+ : $ curl http://localhost:8080/list/epub2epub/myfile.epub 
  :)
 declare
   %rest:GET
+  %rest:query-param("token", "{$token}")
   %rest:path("/list/{$converter=.+}/{$filename=.+}")
-function conv:list($filename as xs:string, $converter as xs:string) {
+function conv:list($filename as xs:string, $converter as xs:string, $token as xs:string?) {
+  let $valid       := conv:validate-token($token, $converter)
   let $output-dir  := $conv:data-dir || file:dir-separator() || $converter || file:dir-separator() || $filename || file:dir-separator() || 'out'
   return 
-    if(conv:status($filename, $converter) = 'finished')
+    if(conv:status($filename, $converter, $token) = 'finished')
     then concat(
            '{"results":[',
            string-join(
@@ -188,7 +195,7 @@ function conv:list($filename as xs:string, $converter as xs:string) {
            ),
            ']}'
          )
-    else 'No results found. Conversion status:' || conv:status($filename, $converter)
+    else 'No results found. Conversion status:' || conv:status($filename, $converter, $token)
 };
 (:
  : Download files from the output dir.
@@ -196,9 +203,12 @@ function conv:list($filename as xs:string, $converter as xs:string) {
  : $ curl --output myfile.epub -G http://localhost:8080/download/myconverter/myfile.epub/myresult.txt
  :)
 declare
+  %rest:GET
+  %rest:query-param("token", "{$token}")
   %rest:path("/download/{$converter=.+}/{$filename=.+}/{$result=.+}")
   %perm:allow("all")
-function conv:download( $result as xs:string, $filename as xs:string, $converter as xs:string ) as item()+ {
+function conv:download( $result as xs:string, $filename as xs:string, $converter as xs:string, $token as xs:string? ) as item()+ {
+  let $valid       := conv:validate-token($token, $converter)
   let $output-dir := $conv:data-dir || file:dir-separator() || $converter || file:dir-separator() || $filename || file:dir-separator() || 'out'
   let $path := $output-dir || file:dir-separator() || $result
   return
@@ -210,10 +220,26 @@ function conv:download( $result as xs:string, $filename as xs:string, $converter
        file:read-binary( $path )
      )
 };
+declare function conv:validate-token( $token as xs:string?, $converter as xs:string ) {
+  let $key := $conv:auth/conv:converter[conv:name = $converter]/conv:key
+  return
+    if(    exists($conv:auth/conv:converter[conv:name = $converter]) 
+       and not($conv:auth/conv:converter[conv:name = $converter]/conv:token = crypto:hmac($token, $key, 'sha256', 'hex')))
+      { error(xs:QName('err:auth001'), $converter) }
+};
+declare
+  %rest:error("err:auth001")
+  %rest:error-param("code", "{$code}")
+  %rest:error-param("description", "{$converter}")
+function conv:token-error($code as xs:string, $converter as xs:string) {
+  let $response :=  '[HTTP/1.1 401 Unauthorized] ' || $code || ': The submitted token is not valid for converter "' || $converter|| '".'
+  return web:error(401, $response)
+};
 (:
  : Describes the API in form of a WADL document
  :)
 declare
+  %rest:GET
   %rest:path("/apidoc")
 function conv:apidoc() {
   rest:wadl()
