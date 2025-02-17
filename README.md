@@ -79,6 +79,6 @@ You can optionally add a SHA-256 hash of an access token to a specific converter
 
 | URL    | Verb | Parameter | Type | Returns | 
 | -------- | ------- | ------- |  ------- | ------- |
-| `/download/{$converter}/{$filename}/{$result}` | GET | | | file |
+| `/download/{$converter}/{$filename}/{$result}` | GET | | | File |
 | | | token | string   | |
 
