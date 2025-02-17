@@ -24,7 +24,7 @@ The input file is specified into the input directory `./in` and the path specifi
 /home/letex/convert/data/my-converter/my-file.xml/out
 ```
 
-The number of parallel conversions is specified with `<queue-limit/>`.
+The number of parallel conversions are specified with `<queue-limit/>`.
 
 The delay in milliseconds between the queue is polled for a free slot is specified with `<polling-delay/>`.
 
@@ -61,7 +61,7 @@ You can optionally add a SHA-256 hash of an access token to a specific converter
 | `/queue` | GET | | | queue as text | 
 | | | token | string   | |
 
-### Get status of a specific conversion
+### Get the status of a specific conversion
 
 | URL    | Verb | Parameter | Type | Returns | 
 | -------- | ------- | ------- |  ------- | ------- |
