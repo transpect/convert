@@ -42,7 +42,7 @@ You can optionally add a SHA-256 hash of an access token to a specific converter
   <converter>
     <name>myconverter</name>
     <token>52199ec32a555bfc682fccdaa92b7d8333278491c395f7b1bef324ef1ccc9e48</token>
-    <key>336648dec28e3d1296230c10d6f8cf924729db77df9b20ac66083e7c0b57029d</key>
+    <key>my-secret-key</key>
   </converter>
 </auth>
 ```
