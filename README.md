@@ -61,7 +61,7 @@ You can optionally add a SHA-256 hash of an access token to a specific converter
 | `/queue` | GET | | | queue as text | 
 | | | token | string   | |
 
-### Get status of a specific conversion.
+### Get status of a specific conversion
 
 | URL    | Verb | Parameter | Type | Returns | 
 | -------- | ------- | ------- |  ------- | ------- |
