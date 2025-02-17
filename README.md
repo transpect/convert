@@ -34,7 +34,7 @@ The delay in milliseconds between the queue is polled for a free slot is specifi
 
 ## Authentification
 
-You can optionally add a SHA-256 hash of an access token to a specific converter by adding its hash and key to generate it to `auth.xml`:
+You can optionally add a SHA-256 hash of an access token to a specific converter by adding its hash and key to generate it to `auth.xml`. A user would then have to add the corresponding HTTP parameter `token` with the appropriate value to their requests.
 
 ```xml
 <?xml version="1.0" encoding="UTF-8"?>
