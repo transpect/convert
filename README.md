@@ -69,7 +69,7 @@ You can optionally add a SHA-256 hash of an access token to a specific converter
 
 | URL    | Verb | Parameter | Type | Returns | 
 | -------- | ------- | ------- |  ------- | ------- |
-| `/list/{$converter}/{$filename}` | GET | | | `pending|started|finished` |
+| `/list/{$converter}/{$filename}` | GET | | | `pending\|started\|finished` |
 | | | token | string   | |
 
 ### List the conversion results
