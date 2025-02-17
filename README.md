@@ -15,7 +15,11 @@ The configuration is stored in `config.xml`:
 </config>
 ```
 
-The converters need to be stored as directory within the path specified by `<code-dir/>`. Each converter directory needs a `Makefile` with the Makefile target `conversion` and the parameters `IN_FILE` and `OUT_DIR`.
+The converters need to be stored as directory within the path specified by `<code-dir/>`. Each converter directory needs a `Makefile` with the Makefile target `conversion` and the parameters `IN_FILE` and `OUT_DIR`. Considering the example above and a converter named `my-converter`, this would be the resulting path:
+
+```
+/home/letex/convert/converter/my-converter/Makefile
+```
 
 The input file is specified into the input directory `./in` and the path specified by `<data-dir/>`. The conversion results are stored within the output directory `./out` and the path specified by `<data-dir/>`. For example, for the converter with the name `my-converter` the input and output directory of the file `my-file.xml` would be computed as follows:
 
