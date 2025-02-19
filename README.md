@@ -49,6 +49,12 @@ You can optionally add a SHA-256 hash of an access token to a specific converter
 
 ## API documentation
 
+### List available converters
+
+| URL    | Verb | Parameter | Type | Returns | 
+| -------- | ------- | ------- |  ------- | ------- |
+| `/converters` | GET | | | converter list as JSON object | 
+
 ### Convert a file
 
 | URL    | Verb | Parameter | Type | Returns | 
@@ -62,21 +68,20 @@ You can optionally add a SHA-256 hash of an access token to a specific converter
 
 | URL    | Verb | Parameter | Type | Returns | 
 | -------- | ------- | ------- |  ------- | ------- |
-| `/queue` | GET | | | queue as text | 
-| | | token | string   | |
+| `/queue` | GET | | | conversion queue as JSON object | 
 
 ### Get the status of a specific conversion
 
 | URL    | Verb | Parameter | Type | Returns | 
 | -------- | ------- | ------- |  ------- | ------- |
-| `/list/{$converter}/{$filename}` | GET | | | `pending\|started\|finished` |
+| `/list/{$converter}/{$filename}` | GET | | | `pending\|started\|finished` as JSON object |
 | | | token | string   | |
 
 ### List the conversion results
 
 | URL    | Verb | Parameter | Type | Returns | 
 | -------- | ------- | ------- |  ------- | ------- |
-| `/list/{$converter}/{$filename}` | GET | | | JSON |
+| `/list/{$converter}/{$filename}` | GET | | | JSON object |
 | | | token | string   | |
 
 ### Download an output file
