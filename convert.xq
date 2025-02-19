@@ -164,7 +164,7 @@ declare
   %rest:GET
   %rest:path("/queue")
 function conv:queue() {
-    '{ "queue":["' || string-join(for $proc in tokenize(file:read-text($conv:queue-path), '\n') return $proc, '", "') || '"] }'
+    '{ "queue":["' || string-join(for $proc in file:read-text-lines($conv:queue-path) return $proc, '", "') || '"] }'
 };
 (: 
  : Gets the status of the current conversion.
