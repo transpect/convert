@@ -13,6 +13,17 @@ declare variable $conv:queue-limit   := xs:integer($conv:config/conv:queue-limit
 declare variable $conv:polling-delay := xs:integer($conv:config/conv:polling-delay);
 
 (:
+ : List available converters
+ : 
+ : $ curl -G http://localhost:8080/converters
+ :)
+declare
+  %rest:GET
+  %rest:path("/converters")
+function conv:converters() {
+  '{ "converters":["' || string-join(for $dir in file:list($conv:code-dir) return replace($dir, '[\\/]', ''), '", "') || '"] }'
+};
+(:
  : Receive file and convert it 
  : with the selected converter.
  :
@@ -153,7 +164,7 @@ declare
   %rest:GET
   %rest:path("/queue")
 function conv:queue() {
-  file:read-text($conv:queue-path)   
+    '{ "queue":["' || string-join(for $proc in tokenize(file:read-text($conv:queue-path), '\n') return $proc, '", "') || '"] }'
 };
 (: 
  : Gets the status of the current conversion.
@@ -167,7 +178,7 @@ declare
 function conv:status($filename as xs:string, $converter as xs:string, $token as xs:string?) {
   let $valid       := conv:validate-token($token, $converter)
   let $status-path := $conv:data-dir || file:dir-separator() || $converter || file:dir-separator() || $filename || file:dir-separator() || 'status'
-  return file:read-text($status-path)
+  return '{ "status":"' ||file:read-text($status-path) || '" }'
 };
 (: 
  : List the available downloads
@@ -184,7 +195,7 @@ function conv:list($filename as xs:string, $converter as xs:string, $token as xs
   return 
     if(conv:status($filename, $converter, $token) = 'finished')
     then concat(
-           '{"results":[',
+           '{ "results":[',
            string-join(
              (for $file in file:list($output-dir)
               return 
@@ -193,7 +204,7 @@ function conv:list($filename as xs:string, $converter as xs:string, $token as xs
              ),
              ','
            ),
-           ']}'
+           '] }'
          )
     else 'No results found. Conversion status:' || conv:status($filename, $converter, $token)
 };
