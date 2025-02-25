@@ -178,7 +178,7 @@ declare
 function conv:status($filename as xs:string, $converter as xs:string, $token as xs:string?) {
   let $valid       := conv:validate-token($token, $converter)
   let $status-path := $conv:data-dir || file:dir-separator() || $converter || file:dir-separator() || $filename || file:dir-separator() || 'status'
-  return '{ "status":"' ||file:read-text($status-path) || '" }'
+  return '{ "status":"' || file:read-text($status-path) || '" }'
 };
 (: 
  : List the available downloads
@@ -193,7 +193,7 @@ function conv:list($filename as xs:string, $converter as xs:string, $token as xs
   let $valid       := conv:validate-token($token, $converter)
   let $output-dir  := $conv:data-dir || file:dir-separator() || $converter || file:dir-separator() || $filename || file:dir-separator() || 'out'
   return 
-    if(conv:status($filename, $converter, $token) = 'finished')
+    if( json:parse( conv:status($filename, $converter, $token))/json/status = 'finished' )
     then concat(
            '{ "results":[',
            string-join(
