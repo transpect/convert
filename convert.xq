@@ -34,25 +34,26 @@ declare
   %rest:path("/convert")
   %rest:form-param("token", "{$token}")
   %rest:form-param("file", "{$file}")
-  %rest:form-param("converter", "{$converter}", "")
-function conv:convert($file as map(*), $converter as xs:string, $token as xs:string?) {
-  for $paths         in conv:paths($file, $converter)
+  %rest:form-param("converter", "{$converter}")
+  %rest:form-param("params", "{$params}")  
+function conv:convert($token as xs:string?, $file as map(*), $converter as xs:string, $params as xs:string?) {
+  for $paths         in conv:paths($file, $converter, $params)
   let $valid         := conv:validate-token($token, $converter)
   let $input-dir     := $paths/input-dir
   let $output-dir    := $paths/output-dir
   let $path          := $paths/path
   let $status        := $paths/status
   let $process-id    := $paths/process-id 
-  return
+  return 
     (conv:prepare($file, $paths),
      conv:execute($paths),
      conv:queue-remove($process-id),
-     conv:set-status($paths, 'finished')) 
+     conv:set-status($paths, 'finished'))
 };
 (:
  : Create paths XML element.
  :)
-declare function conv:paths($file as map(*), $converter as xs:string) as element(paths) {
+declare function conv:paths($file as map(*), $converter as xs:string, $params as xs:string?) as element(paths) {
   for $name           in map:keys($file)
   let $content        := $file( $name )
   let $process-id     := random:uuid()
@@ -76,6 +77,10 @@ declare function conv:paths($file as map(*), $converter as xs:string) as element
       <in-path>{ $in-path }</in-path>
       <out-path>{ $out-path }</out-path>
       <filename>{ $name }</filename>
+      {  
+        for $param in tokenize($params, ':')
+        return <param name="{tokenize($param, '=')[1]}" value="{tokenize($param, '=')[2]}"/>
+      } 
     </paths>
 };
 (:
@@ -134,7 +139,7 @@ declare function conv:wait-for-place-in-queue() {
   )
 };
 (: 
- : Invokes the converter Makefile, to-do: custom parameters
+ : Invokes the converter Makefile
  :)
 declare function conv:execute($paths as element(paths)) {
   let $converter       := $paths/converter
@@ -150,7 +155,9 @@ declare function conv:execute($paths as element(paths)) {
           $converter-path ||  file:dir-separator() || 'Makefile',
           'conversion',
           'IN_FILE=' || $out-path,
-          'OUT_DIR=' || $output-dir
+          'OUT_DIR=' || $output-dir,
+          for $param in $paths/param
+          return $param/@name || '=' || $param/@value
          )
       )
    )
