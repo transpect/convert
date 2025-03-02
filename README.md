@@ -62,8 +62,8 @@ You can optionally add a SHA-256 hash of an access token to a specific converter
 | `/convert` | POST | | | conversion log |
 | | | file | File      | |
 | | | converter | string   | |
-| | | token | string   | |
-| | | params | param1=value1:param2=value2 | |
+| | | token | string  | |
+| | | params | string in the form param1=value1:param2=value2:param3=… | |
 
 ### Print the conversion queue
 
