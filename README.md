@@ -63,6 +63,7 @@ You can optionally add a SHA-256 hash of an access token to a specific converter
 | | | file | File      | |
 | | | converter | string   | |
 | | | token | string   | |
+| | | params | param1=value1:param2=value2 | |
 
 ### Print the conversion queue
 
