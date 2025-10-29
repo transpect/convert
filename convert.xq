@@ -8,7 +8,7 @@ declare variable $conv:config        := doc('config.xml')/conv:config;
 declare variable $conv:auth          := doc('auth.xml')/conv:auth;
 declare variable $conv:code-dir      := xs:string($conv:config/conv:code-dir);
 declare variable $conv:data-dir      := xs:string($conv:config/conv:data-dir);
-declare variable $conv:queue-path    := $conv:data-dir || file:dir-separator() || 'queue';
+declare variable $conv:queue-path    := $conv:data-dir || '/' || 'queue';
 declare variable $conv:queue-limit   := xs:integer($conv:config/conv:queue-limit);
 declare variable $conv:polling-delay := xs:integer($conv:config/conv:polling-delay);
 
@@ -57,12 +57,12 @@ declare function conv:paths($file as map(*), $converter as xs:string, $params as
   for $name           in map:keys($file)
   let $content        := $file( $name )
   let $process-id     := random:uuid()
-  let $converter-path := $conv:code-dir || file:dir-separator() || $converter 
-  let $status-path    := $conv:data-dir || file:dir-separator() || $converter || file:dir-separator() || $name || file:dir-separator() || 'status'
-  let $input-dir      := $conv:data-dir || file:dir-separator() || $converter || file:dir-separator() || $name || file:dir-separator() || 'in'
-  let $output-dir     := $conv:data-dir || file:dir-separator() || $converter || file:dir-separator() || $name || file:dir-separator() || 'out'
-  let $in-path        := $input-dir     || file:dir-separator() || $name
-  let $out-path       := $output-dir    || file:dir-separator() || $name
+  let $converter-path := $conv:code-dir || '/' || $converter 
+  let $status-path    := $conv:data-dir || '/' || $converter || '/' || $name || '/' || 'status'
+  let $input-dir      := $conv:data-dir || '/' || $converter || '/' || $name || '/' || 'in'
+  let $output-dir     := $conv:data-dir || '/' || $converter || '/' || $name || '/' || 'out'
+  let $in-path        := $input-dir     || '/' || $name
+  let $out-path       := $output-dir    || '/' || $name
   return 
     <paths>
       <code-dir>{ $conv:code-dir }</code-dir>
@@ -152,7 +152,7 @@ declare function conv:execute($paths as element(paths)) {
       proc:execute(
         'make', 
         ('-f', 
-          $converter-path ||  file:dir-separator() || 'Makefile',
+          $converter-path ||  '/' || 'Makefile',
           'conversion',
           'IN_FILE=' || $out-path,
           'OUT_DIR=' || $output-dir,
@@ -184,7 +184,7 @@ declare
   %rest:path("/status/{$converter=.+}/{$filename=.+}")
 function conv:status($filename as xs:string, $converter as xs:string, $token as xs:string?) {
   let $valid       := conv:validate-token($token, $converter)
-  let $status-path := $conv:data-dir || file:dir-separator() || $converter || file:dir-separator() || $filename || file:dir-separator() || 'status'
+  let $status-path := $conv:data-dir || '/' || $converter || '/' || $filename || '/' || 'status'
   return '{ "status":"' || file:read-text($status-path) || '" }'
 };
 (: 
@@ -198,7 +198,7 @@ declare
   %rest:path("/list/{$converter=.+}/{$filename=.+}")
 function conv:list($filename as xs:string, $converter as xs:string, $token as xs:string?) {
   let $valid       := conv:validate-token($token, $converter)
-  let $output-dir  := $conv:data-dir || file:dir-separator() || $converter || file:dir-separator() || $filename || file:dir-separator() || 'out'
+  let $output-dir  := $conv:data-dir || '/' || $converter || '/' || $filename || '/' || 'out'
   return 
     if( json:parse( conv:status($filename, $converter, $token))/json/status = 'finished' )
     then concat(
@@ -206,7 +206,7 @@ function conv:list($filename as xs:string, $converter as xs:string, $token as xs
            string-join(
              (for $file in file:list($output-dir)
               return 
-                if(file:is-file($output-dir || file:dir-separator() || $file)) 
+                if(file:is-file($output-dir || '/' || $file)) 
                   { '"' || '/download/' || $converter || '/' || $filename || '/' || $file || '"' } 
              ),
              ','
@@ -227,8 +227,8 @@ declare
   %perm:allow("all")
 function conv:download( $result as xs:string, $filename as xs:string, $converter as xs:string, $token as xs:string? ) as item()+ {
   let $valid       := conv:validate-token($token, $converter)
-  let $output-dir := $conv:data-dir || file:dir-separator() || $converter || file:dir-separator() || $filename || file:dir-separator() || 'out'
-  let $path := $output-dir || file:dir-separator() || $result
+  let $output-dir := $conv:data-dir || '/' || $converter || '/' || $filename || '/' || 'out'
+  let $path := $output-dir || '/' || $result
   return
     (
      web:response-header(
