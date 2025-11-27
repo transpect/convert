@@ -288,26 +288,32 @@ declare
   %rest:query-param("converter", "{$converter}")
   %rest:query-param("iter", "{$iter}")
   %rest:path("/dispatch")
-function conv:dispatch($file, $converter, $iter as xs:integer) {
+function conv:dispatch($file as map(*), $converter as xs:string, $iter as xs:integer) {
+  for $name             in map:keys($file)
+  let $content          := $file( $name )
   let $worker           := $conv:workers/conv:host[$iter]
   let $next-worker      := $conv:workers/conv:host[$iter + 1]
   let $worker-usage     := xs:decimal(http:send-request(<http:request method="get" href="{$worker || '/usage'}" timeout="10"/>)/usage)
   let $worker-max-usage := xs:decimal(http:send-request(<http:request method="get" href="{$worker || '/max-usage'}" timeout="10"/>)/max-usage)
   return 
     if(exists($worker) and ($worker-usage lt $worker-max-usage))
-    then http:send-request(
-           <http:request method="POST" href="{$worker}">
-             <http:multipart media-type="multipart/form-data">
-               <http:header name="content-disposition"
-                            value='form-data; name="files"; file="{ $file }"; converter="{ $converter }"'/>
-               <http:body media-type="application/octet-stream"/>
-             </http:multipart>
-           </http:request>,
-           $worker,
-           file:read-binary($file)
+    then (http:send-request(
+            <http:request method='POST'>
+              <http:multipart media-type='multipart/form-data' boundary="----8dyq30----de29s7----y53x6p----">
+                <http:header name='content-disposition'
+                             value='form-data; name="file"; filename="{$name}"'/>
+                <http:body media-type='application/octet-stream'/>
+                <http:header name="Content-Disposition" 
+                             value='form-data; name="converter"'/>
+                <http:body media-type="text/plain">{$converter}</http:body>
+              </http:multipart>
+            </http:request>,
+            ($worker || '/convert'),
+            $content
+          ) 
          )
     else 
       if(exists($next-worker))
-      then conv:dispatch($file, $converter, $iter +1)
+      then conv:dispatch($file, $converter, $iter + 1)
       else 'No free workers available. Please try again later'
 };
