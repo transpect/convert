@@ -11,6 +11,8 @@ declare variable $conv:data-dir      := xs:string($conv:config/conv:data-dir);
 declare variable $conv:queue-path    := $conv:data-dir || '/' || 'queue';
 declare variable $conv:queue-limit   := xs:integer($conv:config/conv:queue-limit);
 declare variable $conv:polling-delay := xs:integer($conv:config/conv:polling-delay);
+declare variable $conv:workers       := $conv:config/conv:workers;
+declare variable $conv:max-usage     := xs:decimal($conv:config/conv:max-usage);
 
 (:
  : List available converters
@@ -43,12 +45,18 @@ function conv:convert($token as xs:string?, $file as map(*), $converter as xs:st
   let $output-dir    := $paths/output-dir
   let $path          := $paths/path
   let $status        := $paths/status
-  let $process-id    := $paths/process-id 
+  let $process-id    := $paths/process-id  
   return 
-    (conv:prepare($file, $paths),
-     conv:execute($paths),
-     conv:queue-remove($process-id),
-     conv:set-status($paths, 'finished'))
+    (: check if enough system resources are available or send 
+       the data to another worker :)
+    if((prof:runtime('used') div prof:runtime('max')) gt $conv:max-usage)
+    then 
+      conv:dispatch($file, $converter, 1)
+    else
+      (conv:prepare($file, $paths),
+       conv:execute($paths),
+       conv:queue-remove($process-id),
+       conv:set-status($paths, 'finished'))
 };
 (:
  : Create paths XML element.
@@ -226,7 +234,7 @@ declare
   %rest:path("/download/{$converter=.+}/{$filename=.+}/{$result=.+}")
   %perm:allow("all")
 function conv:download( $result as xs:string, $filename as xs:string, $converter as xs:string, $token as xs:string? ) as item()+ {
-  let $valid       := conv:validate-token($token, $converter)
+  let $valid      := conv:validate-token($token, $converter)
   let $output-dir := $conv:data-dir || '/' || $converter || '/' || $filename || '/' || 'out'
   let $path := $output-dir || '/' || $result
   return
@@ -238,7 +246,7 @@ function conv:download( $result as xs:string, $filename as xs:string, $converter
        file:read-binary( $path )
      )
 };
-declare function conv:validate-token( $token as xs:string?, $converter as xs:string ) {
+declare %private function conv:validate-token( $token as xs:string?, $converter as xs:string ) {
   let $key := $conv:auth/conv:converter[conv:name = $converter]/conv:key
   return
     if(    exists($conv:auth/conv:converter[conv:name = $converter]) 
@@ -261,4 +269,45 @@ declare
   %rest:path("/apidoc")
 function conv:apidoc() {
   rest:wadl()
+};
+declare
+  %rest:GET
+  %rest:path("/usage")
+function conv:usage() {
+<usage> { prof:runtime('used') div prof:runtime('max') } </usage>
+};
+declare
+  %rest:GET
+  %rest:path("/max-usage")
+function conv:max-usage() {
+<max-usage> { $conv:max-usage } </max-usage>
+};
+declare 
+  %rest:GET
+  %rest:query-param("file", "{$file}")
+  %rest:query-param("converter", "{$converter}")
+  %rest:query-param("iter", "{$iter}")
+  %rest:path("/dispatch")
+function conv:dispatch($file, $converter, $iter as xs:integer) {
+  let $worker           := $conv:workers/conv:host[$iter]
+  let $next-worker      := $conv:workers/conv:host[$iter + 1]
+  let $worker-usage     := xs:decimal(http:send-request(<http:request method="get" href="{$worker || '/usage'}" timeout="10"/>)/usage)
+  let $worker-max-usage := xs:decimal(http:send-request(<http:request method="get" href="{$worker || '/max-usage'}" timeout="10"/>)/max-usage)
+  return 
+    if(exists($worker) and ($worker-usage lt $worker-max-usage))
+    then http:send-request(
+           <http:request method="POST" href="{$worker}">
+             <http:multipart media-type="multipart/form-data">
+               <http:header name="content-disposition"
+                            value='form-data; name="files"; file="{ $file }"; converter="{ $converter }"'/>
+               <http:body media-type="application/octet-stream"/>
+             </http:multipart>
+           </http:request>,
+           $worker,
+           file:read-binary($file)
+         )
+    else 
+      if(exists($next-worker))
+      then conv:dispatch($file, $converter, $iter +1)
+      else 'No free workers available. Please try again later'
 };

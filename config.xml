@@ -1,7 +1,21 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <config xmlns="http://transpect.io/convert">
+  <!-- where the converters are deployed -->
   <code-dir>/home/letex/convert/converter</code-dir>
+  <!-- where the data should be converted -->
   <data-dir>/home/letex/convert/data</data-dir>
+  <!-- maximum number of parallel conversions -->
   <queue-limit>4</queue-limit>
+  <!-- How long (in ms) should convert wait until 
+       it checks for free space in the queue?-->
   <polling-delay>1000</polling-delay>
+  <!-- maximal percentage of 
+       available memory used -->
+  <max-usage>0.8</max-usage>
+  <!-- insert endpoints of dedicated 
+       convert workers here:
+  <workers>
+    <host>http://localhost:8080</host>
+  </workers>
+  -->
 </config>
