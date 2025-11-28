@@ -49,7 +49,8 @@ function conv:convert($token as xs:string?, $file as map(*), $converter as xs:st
   return 
     (: check if enough system resources are available or send 
        the data to another worker :)
-    if((prof:runtime('used') div prof:runtime('max')) gt $conv:max-usage)
+    if(    exists($conv:workers/conv:hosts) 
+       and (prof:runtime('used') div prof:runtime('max')) gt $conv:max-usage)
     then 
       conv:dispatch($file, $converter, 1)
     else
